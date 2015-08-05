@@ -1,34 +1,47 @@
+#! /usr/bin/env python 
+
 """long winded procedure, without the cursor, but works nonetheless to 
 show 10 random unbanned accounts."""
 
-import pymongo
+from pymongo import MongoClient
 import random
 from bson.objectid import ObjectId
 from random import randint
 import numpy as np
 
+random.seed(4)
 
-
-connection = pymongo.Connection()
+connection = MongoClient()
 
 db = connection["prolific_new"]
 user = db["user"]
-digital_finger_print = db["digital_finger_print"]
+# digital_finger_print = db["digital_finger_print"]
 ip_info = db["ip_info"]
 
 x = db.user.find({"is_facebook_email_verified_stored" : True }).count()
 
 a = randint(0,x)
 
-A = db.user.find({"is_facebook_email_verified_stored" : True }).limit(-1).skip(a).next()
+A = db.user.find_one({"_id" : ObjectId("5367e53cfdf99b05d1acaabd")})
 B = db.user.find({"is_banned" : False }).limit(-1).skip(a).next()
-C = db.digital_finger_print.find().limit(-1).skip(a).next()
-D = db.ip_info.find().limit(-1).skip(a).next()
 
+# db.digital_finger_print.find().limit(-1).skip(a).next()
 
-def index_devices():
-	device_index = db.digital_finger_print.create_index([( 'device' , 1 )])
-	return device_index
+# D = db.ip_info.find().limit(-1).skip(a).next()
+
+def get_database_record_linked_to_user(user, collection):
+	user_id = user['_id']
+	query = db[collection].find({'user' : user_id})
+	return [document for document in query]	
+
+def get_digital_finger_prints_for_user(user):
+	return get_database_record_linked_to_user(user, 'digital_finger_print')
+
+def get_ip_infos_for_user(user):
+	return get_database_record_linked_to_user(user, 'ip_info')
+
+C = get_digital_finger_prints_for_user(A)
+# print C
 
 def get_distinct_devices():
 	device_distinct = db.digital_finger_print.distinct('device')
@@ -40,35 +53,28 @@ def get_num_fb_friends(user):
 
 print get_num_fb_friends(A)
 
-def get_device(digital_finger_print):
-	user_device = digital_finger_print.get('device', -1)
-	return user_device
-#	return device_list.ensureIndex('Other')
-
-print get_device(C)
-
-def get_browser(digital_finger_print):
-	user_browser = digital_finger_print.get('browser', -1)
-	return user_browser
-
-print get_browser(C)
-
-def get_browser_version(digital_finger_print):
-	user_browser_version = digital_finger_print.get('browser_version', -1)
-	return user_browser_version
-
-print get_browser_version(C)
-	
-def get_ip_data(ip_info):
-	user_ip_data = ip_info.get('ip', -1)
-	return user_ip_data
-
-print get_ip_data(D)
-
-print db.digital_finger_print.distinct("device")
+def unique(l):
+	return np.unique(l).tolist()
 
 
+def get_digital_finger_print_values_for_user(user, k, default = "UNKNOWN"):
+	digital_finger_prints = get_digital_finger_prints_for_user(user)
+	return unique([dfp.get(k, default) for dfp in digital_finger_prints])
 
-# for index,device in enumerate(device_distinct)
-# print device_distinct
+def get_devices(user):
+	return get_digital_finger_print_values_for_user(user, "device")
 
+def get_browsers(user):
+	return get_digital_finger_print_values_for_user(user, "browser")
+
+def get_browser_versions(user):
+	return get_digital_finger_print_values_for_user(user, "browser_version")
+
+def get_ips_for_user(user):
+	ip_infos = get_ip_infos_for_user(user)
+	return [ip_info.get('ip') for ip_info in ip_infos]
+
+print get_devices(A)
+print get_browsers(A)
+print get_browser_versions(A)
+print get_ips_for_user(A)
