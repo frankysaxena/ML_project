@@ -84,6 +84,7 @@ def get_ips_for_user(user):
 def get_feature_dict_for_user(user):
 	feature_dict = {}
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
+	feature_dict['firstname'] = user.get("firstname")
 	try:
 		feature_dict['device'] = get_devices(user)[0]
 	except IndexError:
