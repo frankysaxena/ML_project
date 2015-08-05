@@ -1,13 +1,14 @@
 #! /usr/bin/env python 
 
-"""long winded procedure, without the cursor, but works nonetheless to 
-show 10 random unbanned accounts."""
+"""Creates the user's profile to input into ML"""
 
 from pymongo import MongoClient
 import random
 from bson.objectid import ObjectId
 from random import randint
 import numpy as np
+
+from sklearn.feature_extraction import DictVectorizer
 
 random.seed(4)
 
@@ -22,8 +23,8 @@ x = db.user.find({"is_facebook_email_verified_stored" : True }).count()
 
 a = randint(0,x)
 
-A = db.user.find_one({"_id" : ObjectId("5367e53cfdf99b05d1acaabd")})
-B = db.user.find({"is_banned" : False }).limit(-1).skip(a).next()
+A = db.user.find_one({"is_facebook_email_verified_stored" : True })
+#B = db.user.find({"is_banned" : False }).limit(-1).skip(a).next()
 
 # db.digital_finger_print.find().limit(-1).skip(a).next()
 
@@ -39,6 +40,9 @@ def get_digital_finger_prints_for_user(user):
 
 def get_ip_infos_for_user(user):
 	return get_database_record_linked_to_user(user, 'ip_info')
+
+def get_submissions_for_user(user):
+	return get_database_record_linked_to_user(user, 'submission')
 
 C = get_digital_finger_prints_for_user(A)
 # print C
@@ -70,31 +74,42 @@ def get_browsers(user):
 def get_browser_versions(user):
 	return get_digital_finger_print_values_for_user(user, "browser_version")
 
+def get_browser_lang(user):
+	return get_digital_finger_print_values_for_user(user, "browser_lang")
+
 def get_ips_for_user(user):
 	ip_infos = get_ip_infos_for_user(user)
-	return [ip_info.get('ip',' ') for ip_info in ip_infos]
+	return [ip_info.get('ip','') for ip_info in ip_infos]
+
+def get_ips_orgs_for_user(user):
+	ip_infos = get_ip_infos_for_user(user)
+	return [ip_info.get('org','') for ip_info in ip_infos]
 
 # print get_devices(A)
 # print get_browsers(A)
 # print get_browser_versions(A)
 # print get_ips_for_user(A)
 
-
-
 def get_feature_dict_for_user(user):
 	feature_dict = {}
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
 	feature_dict['firstname'] = user.get("firstname")
+	feature_dict['ethnicity'] = user.get("_ethnicity")
+	feature_dict['browsers'] = get_browsers(user)
+	feature_dict['browser_version'] = get_browser_versions(user)
+	feature_dict['browser_lang'] = get_browser_lang(user)
+	feature_dict['ip'] = get_ips_for_user(user)
+	feature_dict['ip_org'] = get_ips_orgs_for_user(user)
+	feature_dict['_current_country_of_residence'] = user.get("_current_country_of_residence")
 	try:
 		feature_dict['device'] = get_devices(user)[0]
 	except IndexError:
 		feature_dict['device'] = "UNKNOWN"
 
-
 	return feature_dict
 
 
-print get_feature_dict_for_user(A)
+#print get_feature_dict_for_user(A)
 
 def get_list_of_feature_dicts(users):
 	feature_dicts = []
@@ -107,4 +122,3 @@ users = [u for u in db.user.find({})]
 random.shuffle(users)
 
 print get_list_of_feature_dicts(users[:10])
-
