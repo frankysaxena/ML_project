@@ -69,6 +69,6 @@ print db.digital_finger_print.distinct("device")
 
 
 
-for index,device in enumerate(device_distinct)
-print device_distinct
+# for index,device in enumerate(device_distinct)
+# print device_distinct
 
