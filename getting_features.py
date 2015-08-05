@@ -51,7 +51,7 @@ def get_num_fb_friends(user):
 	num_friends = user.get('num_facebook_friends_stored', -1)
 	return num_friends
 
-print get_num_fb_friends(A)
+# print get_num_fb_friends(A)
 
 def unique(l):
 	return np.unique(l).tolist()
@@ -72,9 +72,38 @@ def get_browser_versions(user):
 
 def get_ips_for_user(user):
 	ip_infos = get_ip_infos_for_user(user)
-	return [ip_info.get('ip') for ip_info in ip_infos]
+	return [ip_info.get('ip',' ') for ip_info in ip_infos]
 
-print get_devices(A)
-print get_browsers(A)
-print get_browser_versions(A)
-print get_ips_for_user(A)
+# print get_devices(A)
+# print get_browsers(A)
+# print get_browser_versions(A)
+# print get_ips_for_user(A)
+
+
+
+def get_feature_dict_for_user(user):
+	feature_dict = {}
+	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
+	try:
+		feature_dict['device'] = get_devices(user)[0]
+	except IndexError:
+		feature_dict['device'] = "UNKNOWN"
+
+
+	return feature_dict
+
+
+print get_feature_dict_for_user(A)
+
+def get_list_of_feature_dicts(users):
+	feature_dicts = []
+	for user in users:
+		feature_dicts.append(get_feature_dict_for_user(user))
+	return feature_dicts
+
+
+users = [u for u in db.user.find({})]
+random.shuffle(users)
+
+print get_list_of_feature_dicts(users[:10])
+
