@@ -26,7 +26,8 @@ ip_info = db["ip_info"]
 
 #a = randint(0,x)
 
-A = db.user.find_one({"is_banned" : True })
+A = db.user.find({"is_banned" : True }).count()
+
 #B = db.user.find({"is_banned" : False }).limit(-1).skip(a).next()
 
 # db.digital_finger_print.find().limit(-1).skip(a).next()
@@ -87,8 +88,20 @@ def get_prescreening_answers_for_user(user, k, default = "UNKNOWN"):
 	prescreening_answers = get_prescreening_for_user(user)
 	return unique([psc.get(k, default) for psc in prescreening_answers])
 
+def get_all_referrals_for_user(user, k, default = "UNKNOWN"):
+	referrals = get_referrals_for_user(user)
+	return unique([ref.get(k, default) for ref in referrals])
+
 def get_respondant_answer(user):
 	return get_prescreening_answers_for_user(user, "respondant")
+
+def get_num_deleted_prescreening_responses(user):
+	num_deleted_responses = db.answer.find({ 'id' : user} , {'deleted': True}).count()
+	return num_deleted_responses
+
+def get_content_deleted_prescreening_responses(user):
+	deleted_responses = db.answer.find({ 'id' : user} , {'deleted': True})
+	return deleted_responses
 
 def get_devices(user):
 	return get_digital_finger_print_values_for_user(user, "device")
@@ -110,16 +123,11 @@ def num_referrals(user):
 	num = get_referrals(user)
 	num_referrals = len(num)
 	return num_referrals
-#
-# def get_banned_referrals(user):
-# 	referrals = get_referrals(user)
-#
-#
-# def check_if_banned(user):
-# 	if
-#
-#
-# 	return
+
+def get_banned_referrals(user):
+	referredlist = get_all_referrals_for_user(user, "referred")
+	num_banned = db.user.find( { 'id': { '$in': ['referredlist' , 'is_banned : True']}}).count()
+	return num_banned
 
 def get_ips_for_user(user):
 	ip_infos = get_ip_infos_for_user(user)
@@ -184,8 +192,6 @@ def get_fraction_rejected(user):
 		return  value
 
 
-
-
 def get_feature_dict_for_user(user):
 	feature_dict = {}
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
@@ -210,6 +216,9 @@ def get_feature_dict_for_user(user):
 	feature_dict['get_num_participants_on_ip'] = get_num_participants_on_ip(user)
 	feature_dict['num_referrals'] = num_referrals(user)
 	feature_dict['prescreening_answers'] = get_respondant_answer(user)
+	feature_dict['get_banned_referrals'] = get_banned_referrals(user)
+	feature_dict['get_num_deleted_prescreening_responses'] = get_num_deleted_prescreening_responses(user)
+ 	feature_dict['get_content_deleted_prescreening_responses'] = get_content_deleted_prescreening_responses(user)
 	try:
 		feature_dict['devices'] = get_devices(user)[0]
 	except IndexError:
@@ -250,6 +259,10 @@ def get_feature_dict_for_user(user):
 		feature_dict['prescreening_answers'] = get_respondant_answer(user)[0]
 	except IndexError:
 		feature_dict['prescreening_answers'] = "UNKNOWN"
+	try:
+		feature_dict['get_content_deleted_prescreening_responses'] = get_content_deleted_prescreening_responses(user)[0]
+	except IndexError:
+		feature_dict['get_content_deleted_prescreening_responses'] = "UNKNOWN"
 	return feature_dict
 
 
