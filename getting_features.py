@@ -19,7 +19,8 @@ db = connection["prolific_new"]
 user = db["user"]
 # digital_finger_print = db["digital_finger_print"]
 ip_info = db["ip_info"]
-ip = db["ip"]
+# ip = db["ip"]
+# referral = db["referral"]
 
 #x = db.user.find({"is_facebook_email_verified_stored" : True }).count()
 
@@ -37,6 +38,11 @@ def get_database_record_linked_to_user(user, collection):
 	query = db[collection].find({'user' : user_id})
 	return [document for document in query]
 
+def get_database_record_linked_to_ip(ip, collection):
+	ip_id = ip['_id']
+	query = db[collection].find({'ip' : ip_id})
+	return [document for document in query]
+
 def get_digital_finger_prints_for_user(user):
 	return get_database_record_linked_to_user(user, 'digital_finger_print')
 
@@ -52,34 +58,22 @@ def get_userdata_for_user(user):
 def get_phone_verification_for_user(user):
 	return get_database_record_linked_to_user(user, 'phone_verification')
 
-def get_database_record_linked_to_ip(ip, collection):
-	ip_id = ip['_id']
-	query = db[collection].find({'ip' : ip_id})
-	return [document for document in query]
+def get_participants_on_ip(ip):
+	return get_database_record_linked_to_ip(ip, 'participants')
+
+def get_referrals_for_user(user):
+	return get_database_record_linked_to_user(user, 'referral')
+
+def get_prescreening_for_user(user):
+	return get_database_record_linked_to_user(user, 'answer')
 
 def unique(l):
 	return np.unique(l).tolist()
-#
-# def get_users_for_ip(ip):
-# 	return get_database_record_linked_to_ip(ip, 'user')
-#
-# def get_participants_on_ip(ip):
-# 	participants_to_ip = ip.get('participants', -1)
-# 	return participants_to_ip
-#
-# def get_num_participants_on_ip(ip):
-# 	participants = get_participants_on_ip(ip)
-# 	num_participants = len(participants)
-# 	return num_participants
 
-#
-# def get_each_user_for_ip(ip):
-# 	each_ip = ip.get('ip')
-# 	return each_ip
-
-def get_distinct_devices():
-	device_distinct = db.digital_finger_print.distinct('device')
-	return device_distinct
+def get_num_participants_on_ip(ip):
+	participants = get_participants_on_ip(ip)
+	num_participants = len(participants)
+	return num_participants
 
 def get_num_fb_friends(user):
 	num_friends = user.get('num_facebook_friends_stored', -1)
@@ -88,6 +82,13 @@ def get_num_fb_friends(user):
 def get_digital_finger_print_values_for_user(user, k, default = "UNKNOWN"):
 	digital_finger_prints = get_digital_finger_prints_for_user(user)
 	return unique([dfp.get(k, default) for dfp in digital_finger_prints])
+
+def get_prescreening_answers_for_user(user, k, default = "UNKNOWN"):
+	prescreening_answers = get_prescreening_for_user(user)
+	return unique([psc.get(k, default) for psc in prescreening_answers])
+
+def get_respondant_answer(user):
+	return get_prescreening_answers_for_user(user, "respondant")
 
 def get_devices(user):
 	return get_digital_finger_print_values_for_user(user, "device")
@@ -100,6 +101,25 @@ def get_browser_versions(user):
 
 def get_browser_lang(user):
 	return get_digital_finger_print_values_for_user(user, "browser_lang")
+
+def get_referrals(user):
+	referrals = get_referrals_for_user(user)
+	return [referral.get('referred', '') for referral in referrals]
+
+def num_referrals(user):
+	num = get_referrals(user)
+	num_referrals = len(num)
+	return num_referrals
+#
+# def get_banned_referrals(user):
+# 	referrals = get_referrals(user)
+#
+#
+# def check_if_banned(user):
+# 	if
+#
+#
+# 	return
 
 def get_ips_for_user(user):
 	ip_infos = get_ip_infos_for_user(user)
@@ -163,6 +183,9 @@ def get_fraction_rejected(user):
 	else:
 		return  value
 
+
+
+
 def get_feature_dict_for_user(user):
 	feature_dict = {}
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
@@ -184,7 +207,9 @@ def get_feature_dict_for_user(user):
 	feature_dict['total_number_of_submissions'] = get_total_number_of_submissions(user)
 	feature_dict['get_num_rejected_submissions'] = get_num_rejected_submissions(user)
  	feature_dict['get_fraction_rejected'] = get_fraction_rejected(user)
-	# feature_dict['get_num_participants_on_ip'] = get_num_participants_on_ip(user)
+	feature_dict['get_num_participants_on_ip'] = get_num_participants_on_ip(user)
+	feature_dict['num_referrals'] = num_referrals(user)
+	feature_dict['prescreening_answers'] = get_respondant_answer(user)
 	try:
 		feature_dict['devices'] = get_devices(user)[0]
 	except IndexError:
@@ -221,6 +246,10 @@ def get_feature_dict_for_user(user):
 		feature_dict['is_facebook_verified'] = get_fb_verification(user)[0]
 	except IndexError:
 		feature_dict['is_facebook_verified'] = "UNKNOWN"
+	try:
+		feature_dict['prescreening_answers'] = get_respondant_answer(user)[0]
+	except IndexError:
+		feature_dict['prescreening_answers'] = "UNKNOWN"
 	return feature_dict
 
 
