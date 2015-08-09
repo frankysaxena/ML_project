@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
-"""Creates the user's profile to input into ML. Firstly only banned users"""
+"""Creates the user's profile to input into ML. First matrix only banned,
+second of only unbanned"""
 
 from __future__ import division
 from pymongo import MongoClient
