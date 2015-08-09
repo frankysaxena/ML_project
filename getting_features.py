@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-"""Creates the user's profile to input into ML"""
+"""Creates the user's profile to input into ML. Firstly only banned users"""
 
 from __future__ import division
 from pymongo import MongoClient
@@ -11,14 +11,14 @@ import numpy as np
 
 from sklearn.feature_extraction import DictVectorizer
 
-random.seed(4)
+# random.seed(4)
 
 connection = MongoClient()
 
 db = connection["prolific_new"]
-user = db["user"]
+# user = db["user"]
 # digital_finger_print = db["digital_finger_print"]
-ip_info = db["ip_info"]
+# ip_info = db["ip_info"]
 # ip = db["ip"]
 # referral = db["referral"]
 
@@ -26,7 +26,7 @@ ip_info = db["ip_info"]
 
 #a = randint(0,x)
 
-A = db.user.find({"is_banned" : True }).count()
+# A = db.user.find({"is_banned" : True }).count()
 
 #B = db.user.find({"is_banned" : False }).limit(-1).skip(a).next()
 
@@ -268,22 +268,30 @@ def get_feature_dict_for_user(user):
 
 #print get_feature_dict_for_user(A)
 
-def get_list_of_feature_dicts(users):
+def get_list_of_feature_dicts(banned_users):
 	feature_dicts = []
-	for user in users:
+	for user in banned_users:
 		feature_dicts.append(get_feature_dict_for_user(user))
 	return feature_dicts
 
+banned_users = [u for u in db.user.find({"is_banned" : True})] #Only banned users
+random.shuffle(banned_users)
 
-users = [u for u in db.user.find({"is_banned" : True})] #Only banned users
-random.shuffle(users)
+def get_list_of_feature_dicts(unbanned_users):
+	feature_dicts = []
+	for user in unbanned_users:
+		feature_dicts.append(get_feature_dict_for_user(user))
+	return feature_dicts
 
-#print get_list_of_feature_dicts(users[:10])
+unbanned_users = [u for u in db.user.find({"is_banned" : False})] #unbanned users
+random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
-sample =   get_list_of_feature_dicts(users[:10])
+banned_sample =   get_list_of_feature_dicts(banned_users[:10])
+unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
 
-print vec.fit_transform(sample).toarray()
+print vec.fit_transform(banned_sample).toarray()
+print vec.fit_transform(unbanned_sample).toarray()
 
 print vec.get_feature_names()
