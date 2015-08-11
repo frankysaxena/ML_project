@@ -11,6 +11,11 @@ from random import randint
 import numpy as np
 
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.preprocessing import Imputer
+
+import dns, smtplib
+import tldextract
+import re
 
 # random.seed(4)
 
@@ -68,6 +73,9 @@ def get_referrals_for_user(user):
 
 def get_prescreening_for_user(user):
 	return get_database_record_linked_to_user(user, 'answer')
+
+def get_email_for_user(user):
+	return get_database_record_linked_to_user(user, 'email')
 
 def unique(l):
 	return np.unique(l).tolist()
@@ -185,26 +193,44 @@ def get_num_rejected_submissions(user):
 def get_fraction_rejected(user):
 	reject = get_num_rejected_submissions(user)
 	tot = get_total_number_of_submissions(user)
-	value = float('nan')
-	if tot != 0:
-		fraction = reject / tot
-		return fraction
-	else:
-		return  value
+	while True:
+		try:
+			fraction = reject / tot
+			return fraction
+		except ZeroDivisionError:
+			return  0
 
+def get_current_country_of_residence(user):
+	userdata = get_userdata_for_user(user)
+	return [user.get('_current_country_of_residence' , '') for user in userdata]
+
+def get_mx_domains_from_email(email):
+    mx_domains = []
+    domain = re.search("@[\w.]+", 'email')
+    domain_name = domain.group()
+    DNS.DiscoverNameServers()
+    mx_hosts = DNS.mxlookup(domain_name[1:])
+    for mx in mx_hosts:
+        mx_domains.append(".".join([tldextract.extract(mx[1]).domain , tldextract.extract(mx[1]).suffix]) )
+    return mx_domains
+
+def get_mx_domains_for_user(user):
+	user_email = get_email_for_user
+	get_mx = get_mx_domains_from_email(user_email)
+	return get_mx
 
 def get_feature_dict_for_user(user):
 	feature_dict = {}
+	feature_dict['mx_domains'] = get_mx_domains_for_user(user)
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
 	feature_dict['firstname'] = user.get("firstname")
-	feature_dict['ethnicity'] = user.get("_ethnicity")
 	feature_dict['browsers'] = get_browsers(user)
 	feature_dict['devices'] = get_devices(user)
 	feature_dict['browser_version'] = get_browser_versions(user)
 	feature_dict['browser_lang'] = get_browser_lang(user)
 	feature_dict['num_ip'] = get_num_ips_for_user(user)
 	feature_dict['ip_org'] = get_ips_orgs_for_user(user)
-	feature_dict['current_country_of_residence'] = user.get("_current_country_of_residence")
+	feature_dict['current_country_of_residence'] = get_current_country_of_residence(user)
 	feature_dict['is_email_verified'] = user.get("is_email_verified")
 	feature_dict['locations of user'] = get_locations_for_user(user)
 	feature_dict['number_of_emails'] =  get_num_emails_for_user(user)
@@ -238,7 +264,7 @@ def get_feature_dict_for_user(user):
 		feature_dict['ip_org'] = "UNKNOWN"
 	try:
 		feature_dict['browser_version'] = get_browser_versions(user)[0]
-	except IndexError:
+	except (IndexError):
 		feature_dict['browser_version'] = "UNKNOWN"
 	try:
 		feature_dict['locations of user'] = get_locations_for_user(user)[0]
@@ -248,6 +274,10 @@ def get_feature_dict_for_user(user):
 		feature_dict['_is_current_country_of_residence_consistent_with_phone_location'] = get_is_current_country_of_residence_consistent_with_phone_location(user)[0]
 	except IndexError:
 		feature_dict['_is_current_country_of_residence_consistent_with_phone_location'] = "UNKNOWN"
+	try:
+		feature_dict['current_country_of_residence'] = get_current_country_of_residence(user)[0]
+	except IndexError:
+		feature_dict['current_country_of_residence'] = "UNKNOWN"
 	try:
 		feature_dict['is_phone_verified'] = get_phone_verification(user)[0]
 	except IndexError:
@@ -265,9 +295,6 @@ def get_feature_dict_for_user(user):
 	except IndexError:
 		feature_dict['get_content_deleted_prescreening_responses'] = "UNKNOWN"
 	return feature_dict
-
-
-#print get_feature_dict_for_user(A)
 
 def get_list_of_feature_dicts(banned_users):
 	feature_dicts = []
@@ -296,3 +323,18 @@ print vec.fit_transform(banned_sample).toarray()
 print vec.fit_transform(unbanned_sample).toarray()
 
 print vec.get_feature_names()
+
+x = vec.fit_transform(banned_sample).toarray()
+with file('banned_sample.txt', 'w') as outfile:
+	outfile.write('# Array shape: {0}\n'.format(x.shape))
+	for x_slice in x:
+		np.savetxt(outfile, x_slice, fmt='%-7.2f')
+		outfile.write('# New user\n')
+
+
+y = vec.fit_transform(unbanned_sample).toarray()
+with file('unbanned_sample.txt', 'w') as outfile:
+	outfile.write('# Array shape: {0}\n'.format(y.shape))
+	for y_slice in y:
+		np.savetxt(outfile, y_slice, fmt='%-7.2f')
+		outfile.write('# New user\n')
