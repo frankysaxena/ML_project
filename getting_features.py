@@ -335,9 +335,10 @@ unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
 
 
 X = vec.fit_transform(banned_sample + unbanned_sample).toarray()
-Y = np.array([0] * X.shape[0] + [1] * X.shape[0])
+Y = np.array([1] * len(banned_sample) + [0] * len(unbanned_sample))
 # Z = vec.fit_transform(X + Yy).toarray()
 
+assert X.shape[0] == Y.shape[0]
 np.savetxt('features.dat', X, fmt='%-7.2f')
 np.savetxt('response.dat', Y, fmt='%-7.2f')
 # np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
