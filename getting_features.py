@@ -325,35 +325,21 @@ random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
+banned_users = banned_users[:10]
+unbanned_users = unbanned_users[:10]
 banned_sample =   get_list_of_feature_dicts(banned_users[:10])
 unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
 # random_sample = get_list_of_feature_dicts(random_users[:10])
 #
-# Y = [[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
 
-
-# Z = vec.fit_transform(X + Y).toarray()
-# X_unbanned = vec.fit_transform(unbanned_sample).toarray()
-# X_random = vec.fit_transform(random_sample).toarray()
-
-def get_list_key_for_banned_unbanned(Y):
-	Y = []
-	for x in np.arange(10):
-		Y.append('0')
-	for x in np.arange(11 , 21):
-		Y.append('1')
-	return Y
-
-# Yx = get_list_key_for_banned_unbanned(Y[:21])
-
-# Yy = vec.fit_transform(Y).toarray()
 
 
 X = vec.fit_transform(banned_sample + unbanned_sample).toarray()
-
+Y = np.array([0] * X.shape[0] + [1] * X.shape[0])
 # Z = vec.fit_transform(X + Yy).toarray()
 
-np.savetxt('sample.dat', X, fmt='%-7.2f')
+np.savetxt('features.dat', X, fmt='%-7.2f')
+np.savetxt('response.dat', Y, fmt='%-7.2f')
 # np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
 # np.savetxt('random_sample.dat', X_random, fmt='%-7.2f')
 
