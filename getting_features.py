@@ -17,7 +17,7 @@ from sklearn.preprocessing import Imputer
 # import tldextract
 import re
 
-# random.seed(4)
+random.seed(4)
 
 connection = MongoClient()
 
@@ -203,21 +203,21 @@ def get_fraction_rejected(user):
 def get_current_country_of_residence(user):
 	userdata = get_userdata_for_user(user)
 	return [user.get('_current_country_of_residence' , '') for user in userdata]
-
-def get_mx_domains_from_email(email):
-    mx_domains = []
-    domain = re.search("@[\w.]+", 'email')
-    domain_name = domain.group()
-    DNS.DiscoverNameServers()
-    mx_hosts = DNS.mxlookup(domain_name[1:])
-    for mx in mx_hosts:
-        mx_domains.append(".".join([tldextract.extract(mx[1]).domain , tldextract.extract(mx[1]).suffix]) )
-    return mx_domains
-
-def get_mx_domains_for_user(user):
-	user_email = get_email_for_user
-	get_mx = get_mx_domains_from_email(user_email)
-	return get_mx
+#
+# def get_mx_domains_from_email(email):
+#     mx_domains = []
+#     domain = re.search("@[\w.]+", 'email')
+#     domain_name = domain.group()
+#     DNS.DiscoverNameServers()
+#     mx_hosts = DNS.mxlookup(domain_name[1:])
+#     for mx in mx_hosts:
+#         mx_domains.append(".".join([tldextract.extract(mx[1]).domain , tldextract.extract(mx[1]).suffix]) )
+#     return mx_domains
+#
+# def get_mx_domains_for_user(user):
+# 	user_email = get_email_for_user
+# 	get_mx = get_mx_domains_from_email(user_email)
+# 	return get_mx
 
 def get_feature_dict_for_user(user):
 	feature_dict = {}
@@ -295,6 +295,15 @@ def get_feature_dict_for_user(user):
 	except IndexError:
 		feature_dict['get_content_deleted_prescreening_responses'] = "UNKNOWN"
 	return feature_dict
+#
+# def get_list_of_feature_dicts(random_users):
+# 	feature_dicts = []
+# 	for user in random_users:
+# 		feature_dicts.append(get_feature_dict_for_user(user))
+# 	return feature_dicts
+#
+# random_users = [u for u in db.user.find()] # random sample, both banned and unbanned
+# random.shuffle(random_users)
 
 def get_list_of_feature_dicts(banned_users):
 	feature_dicts = []
@@ -305,39 +314,56 @@ def get_list_of_feature_dicts(banned_users):
 banned_users = [u for u in db.user.find({"is_banned" : True})] #Only banned users
 random.shuffle(banned_users)
 
-def get_list_of_feature_dicts(unbanned_users):
-	feature_dicts = []
-	for user in unbanned_users:
-		feature_dicts.append(get_feature_dict_for_user(user))
-	return feature_dicts
+# def get_list_of_feature_dicts(unbanned_users):
+# 	feature_dicts = []
+# 	for user in unbanned_users:
+# 		feature_dicts.append(get_feature_dict_for_user(user))
+# 	return feature_dicts
 
 unbanned_users = [u for u in db.user.find({"is_banned" : False})] #unbanned users
 random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
-banned_sample =   get_list_of_feature_dicts(banned_users[:100])
-unbanned_sample = get_list_of_feature_dicts(unbanned_users[:100])
-
-X_banned = vec.fit_transform(banned_sample).toarray()
-X_unbanned = vec.fit_transform(unbanned_sample).toarray()
-
-np.savetxt('banned_sample.dat', X_banned, fmt='%-7.2f')
-np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
-
-print vec.get_feature_names()
-
-# x = vec.fit_transform(banned_sample).toarray()
-# with file('banned_sample.txt', 'w') as outfile:
-# 	outfile.write('# Array shape: {0}\n'.format(x.shape))
-# 	for x_slice in x:
-# 		np.savetxt(outfile, x_slice, fmt='%-7.2f')
-# 		outfile.write('# New user\n')
+banned_sample =   get_list_of_feature_dicts(banned_users[:10])
+unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
+# random_sample = get_list_of_feature_dicts(random_users[:10])
+#
+# Y = [[0],[0],[0],[0],[0],[0],[0],[0],[0],[0],[1],[1],[1],[1],[1],[1],[1],[1],[1],[1]]
 
 
-# y = vec.fit_transform(unbanned_sample).toarray()
-# with file('unbanned_sample.txt', 'w') as outfile:
-# 	outfile.write('# Array shape: {0}\n'.format(y.shape))
-# 	for y_slice in y:
-# 		np.savetxt(outfile, y_slice, fmt='%-7.2f')
-# 		outfile.write('# New user\n')
+# Z = vec.fit_transform(X + Y).toarray()
+# X_unbanned = vec.fit_transform(unbanned_sample).toarray()
+# X_random = vec.fit_transform(random_sample).toarray()
+
+def get_list_key_for_banned_unbanned(Y):
+	Y = []
+	for x in np.arange(10):
+		Y.append('0')
+	for x in np.arange(11 , 21):
+		Y.append('1')
+	return Y
+
+# Yx = get_list_key_for_banned_unbanned(Y[:21])
+
+# Yy = vec.fit_transform(Y).toarray()
+
+
+X = vec.fit_transform(banned_sample + unbanned_sample).toarray()
+
+# Z = vec.fit_transform(X + Yy).toarray()
+
+np.savetxt('sample.dat', X, fmt='%-7.2f')
+# np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
+# np.savetxt('random_sample.dat', X_random, fmt='%-7.2f')
+
+
+# i = vec.get_feature_names()
+# print len(i)
+
+# filenames = ['banned_sample.dat', 'unbanned_sample.dat'] #combines the two unbanned_sample and banned_sample data into one
+# with open('random_sample.dat', 'w') as outfile:
+#     for fname in filenames:
+#         with open(fname) as infile:
+#             for line in infile:
+#                 outfile.write(line)
