@@ -13,8 +13,8 @@ import numpy as np
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import Imputer
 
-import dns, smtplib
-import tldextract
+# import dns, smtplib
+# import tldextract
 import re
 
 # random.seed(4)
@@ -221,7 +221,7 @@ def get_mx_domains_for_user(user):
 
 def get_feature_dict_for_user(user):
 	feature_dict = {}
-	feature_dict['mx_domains'] = get_mx_domains_for_user(user)
+	# feature_dict['mx_domains'] = get_mx_domains_for_user(user)
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
 	feature_dict['firstname'] = user.get("firstname")
 	feature_dict['browsers'] = get_browsers(user)
@@ -316,25 +316,28 @@ random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
-banned_sample =   get_list_of_feature_dicts(banned_users[:10])
-unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
+banned_sample =   get_list_of_feature_dicts(banned_users[:100])
+unbanned_sample = get_list_of_feature_dicts(unbanned_users[:100])
 
-print vec.fit_transform(banned_sample).toarray()
-print vec.fit_transform(unbanned_sample).toarray()
+X_banned = vec.fit_transform(banned_sample).toarray()
+X_unbanned = vec.fit_transform(unbanned_sample).toarray()
+
+np.savetxt('banned_sample.dat', X_banned, fmt='%-7.2f')
+np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
 
 print vec.get_feature_names()
 
-x = vec.fit_transform(banned_sample).toarray()
-with file('banned_sample.txt', 'w') as outfile:
-	outfile.write('# Array shape: {0}\n'.format(x.shape))
-	for x_slice in x:
-		np.savetxt(outfile, x_slice, fmt='%-7.2f')
-		outfile.write('# New user\n')
+# x = vec.fit_transform(banned_sample).toarray()
+# with file('banned_sample.txt', 'w') as outfile:
+# 	outfile.write('# Array shape: {0}\n'.format(x.shape))
+# 	for x_slice in x:
+# 		np.savetxt(outfile, x_slice, fmt='%-7.2f')
+# 		outfile.write('# New user\n')
 
 
-y = vec.fit_transform(unbanned_sample).toarray()
-with file('unbanned_sample.txt', 'w') as outfile:
-	outfile.write('# Array shape: {0}\n'.format(y.shape))
-	for y_slice in y:
-		np.savetxt(outfile, y_slice, fmt='%-7.2f')
-		outfile.write('# New user\n')
+# y = vec.fit_transform(unbanned_sample).toarray()
+# with file('unbanned_sample.txt', 'w') as outfile:
+# 	outfile.write('# Array shape: {0}\n'.format(y.shape))
+# 	for y_slice in y:
+# 		np.savetxt(outfile, y_slice, fmt='%-7.2f')
+# 		outfile.write('# New user\n')
