@@ -15,15 +15,17 @@ from sklearn.decomposition import PCA
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import Imputer
 
-random_data = np.loadtxt("random_sample.dat", unpack=True)
+features = np.loadtxt("features.dat", unpack=True)
+response = np.loadtxt("response.dat", unpack=True)
 
-X = np.array(random_data).all()
-y = np.array(random_data).all()
+X = np.array(features)
+Y = np.array(response)
 
 # print banned_data
 pca = PCA(n_components=2)
-X_r = pca.fit(random_data).transform(random_data)
-print X_r
+Y_r = pca.fit(response).transform(response)
+X_r = pca.fit(features).transform(features)
+print Y_r
 plt.figure()
 plt.scatter(X_r[:,  0], X_r[:, 1])
 plt.title('PCA of dataset')

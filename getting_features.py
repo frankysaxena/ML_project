@@ -325,10 +325,10 @@ random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
-banned_users = banned_users[:10]
-unbanned_users = unbanned_users[:10]
-banned_sample =   get_list_of_feature_dicts(banned_users[:10])
-unbanned_sample = get_list_of_feature_dicts(unbanned_users[:10])
+banned_users = banned_users[:500]
+unbanned_users = unbanned_users[:500]
+banned_sample =   get_list_of_feature_dicts(banned_users[:500])
+unbanned_sample = get_list_of_feature_dicts(unbanned_users[:500])
 # random_sample = get_list_of_feature_dicts(random_users[:10])
 #
 
