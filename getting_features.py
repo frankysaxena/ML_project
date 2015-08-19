@@ -1,3 +1,8 @@
+
+# coding: utf-8
+
+# In[12]:
+
 #! /usr/bin/env python
 
 """Creates the user's profile to input into ML. First matrix only banned,
@@ -13,8 +18,6 @@ import numpy as np
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import Imputer
 
-# import dns, smtplib
-# import tldextract
 import re
 
 random.seed(4)
@@ -28,7 +31,10 @@ db = connection["prolific_new"]
 # ip = db["ip"]
 # referral = db["referral"]
 
-#x = db.user.find({"is_facebook_email_verified_stored" : True }).count()
+# x = db.user.find({"is_facebook_email_verified_stored" : True }).limit(10)
+#
+# print x
+
 
 #a = randint(0,x)
 
@@ -39,6 +45,9 @@ db = connection["prolific_new"]
 # db.digital_finger_print.find().limit(-1).skip(a).next()
 
 # D = db.ip_info.find().limit(-1).skip(a).next()
+
+
+# In[13]:
 
 def get_database_record_linked_to_user(user, collection):
 	user_id = user['_id']
@@ -68,6 +77,11 @@ def get_phone_verification_for_user(user):
 def get_participants_on_ip(ip):
 	return get_database_record_linked_to_ip(ip, 'participants')
 
+
+# In[14]:
+def get_user_id_for_user(user):
+	return get_database_record_linked_to_user(user, '_id')
+
 def get_referrals_for_user(user):
 	return get_database_record_linked_to_user(user, 'referral')
 
@@ -93,6 +107,9 @@ def get_digital_finger_print_values_for_user(user, k, default = "UNKNOWN"):
 	digital_finger_prints = get_digital_finger_prints_for_user(user)
 	return unique([dfp.get(k, default) for dfp in digital_finger_prints])
 
+
+# In[15]:
+
 def get_prescreening_answers_for_user(user, k, default = "UNKNOWN"):
 	prescreening_answers = get_prescreening_for_user(user)
 	return unique([psc.get(k, default) for psc in prescreening_answers])
@@ -103,6 +120,9 @@ def get_all_referrals_for_user(user, k, default = "UNKNOWN"):
 
 def get_respondant_answer(user):
 	return get_prescreening_answers_for_user(user, "respondant")
+
+
+# In[16]:
 
 def get_num_deleted_prescreening_responses(user):
 	num_deleted_responses = db.answer.find({ 'id' : user} , {'deleted': True}).count()
@@ -185,6 +205,8 @@ def get_rejected_submissions(user):
 	submissions = get_submissions_for_user(user)
 	return [submission.get('is_approved', 'False') for submission in submissions]
 
+
+
 def get_num_rejected_submissions(user):
 	rejected = get_rejected_submissions(user)
 	num_rejected = len(rejected)
@@ -203,37 +225,25 @@ def get_fraction_rejected(user):
 def get_current_country_of_residence(user):
 	userdata = get_userdata_for_user(user)
 	return [user.get('_current_country_of_residence' , '') for user in userdata]
-#
-# def get_mx_domains_from_email(email):
-#     mx_domains = []
-#     domain = re.search("@[\w.]+", 'email')
-#     domain_name = domain.group()
-#     DNS.DiscoverNameServers()
-#     mx_hosts = DNS.mxlookup(domain_name[1:])
-#     for mx in mx_hosts:
-#         mx_domains.append(".".join([tldextract.extract(mx[1]).domain , tldextract.extract(mx[1]).suffix]) )
-#     return mx_domains
-#
-# def get_mx_domains_for_user(user):
-# 	user_email = get_email_for_user
-# 	get_mx = get_mx_domains_from_email(user_email)
-# 	return get_mx
+
+def get_current_country_consistent_with_ip(user):
+	userdata = get_userdata_for_user(user)
+	return [user.get('_is_current_country_of_residence_consistent' , '') for user in userdata]
 
 def get_feature_dict_for_user(user):
 	feature_dict = {}
-	# feature_dict['mx_domains'] = get_mx_domains_for_user(user)
 	feature_dict['num_facebook_friends'] = get_num_fb_friends(user)
-	feature_dict['firstname'] = user.get("firstname")
-	feature_dict['browsers'] = get_browsers(user)
-	feature_dict['devices'] = get_devices(user)
-	feature_dict['browser_version'] = get_browser_versions(user)
+	# feature_dict['firstname'] = user.get("firstname")
+	# feature_dict['browsers'] = get_browsers(user)
+	# feature_dict['devices'] = get_devices(user)
+	# feature_dict['browser_version'] = get_browser_versions(user)
 	feature_dict['browser_lang'] = get_browser_lang(user)
 	feature_dict['num_ip'] = get_num_ips_for_user(user)
 	feature_dict['ip_org'] = get_ips_orgs_for_user(user)
 	feature_dict['current_country_of_residence'] = get_current_country_of_residence(user)
 	feature_dict['is_email_verified'] = user.get("is_email_verified")
-	feature_dict['locations of user'] = get_locations_for_user(user)
-	feature_dict['number_of_emails'] =  get_num_emails_for_user(user)
+	# feature_dict['locations of user'] = get_locations_for_user(user)
+	# feature_dict['number_of_emails'] =  get_num_emails_for_user(user)
 	feature_dict['_is_current_country_of_residence_consistent_with_phone_location'] = get_is_current_country_of_residence_consistent_with_phone_location(user)
 	feature_dict['is_phone_verified'] = get_phone_verification(user)
 	feature_dict['is_facebook_verified'] = get_fb_verification(user)
@@ -246,6 +256,7 @@ def get_feature_dict_for_user(user):
 	feature_dict['get_banned_referrals'] = get_banned_referrals(user)
 	feature_dict['get_num_deleted_prescreening_responses'] = get_num_deleted_prescreening_responses(user)
  	feature_dict['get_content_deleted_prescreening_responses'] = get_content_deleted_prescreening_responses(user)
+	feature_dict['is_current_country_of_residence_consistent_with_ip'] = get_current_country_consistent_with_ip(user)
 	try:
 		feature_dict['devices'] = get_devices(user)[0]
 	except IndexError:
@@ -294,16 +305,20 @@ def get_feature_dict_for_user(user):
 		feature_dict['get_content_deleted_prescreening_responses'] = get_content_deleted_prescreening_responses(user)[0]
 	except IndexError:
 		feature_dict['get_content_deleted_prescreening_responses'] = "UNKNOWN"
+	try:
+		feature_dict['is_current_country_of_residence_consistent_with_ip'] = get_current_country_consistent_with_ip(user)[0]
+	except IndexError:
+		feature_dict['is_current_country_of_residence_consistent_with_ip'] = 'UNKNOWN'
 	return feature_dict
 #
-# def get_list_of_feature_dicts(random_users):
-# 	feature_dicts = []
-# 	for user in random_users:
-# 		feature_dicts.append(get_feature_dict_for_user(user))
-# 	return feature_dicts
+# def get_banned_users(user):
+# 	userdata = get_userdata_for_user(user)
+# 	return [user.get('is_banned', 'True') for user in userdata]
 #
-# random_users = [u for u in db.user.find()] # random sample, both banned and unbanned
-# random.shuffle(random_users)
+#
+# def get_unbanned_users(user):
+# 	userdata = get_userdata_for_user(user)
+# 	return [user.get('is_banned', 'False') for user in userdata]
 
 def get_list_of_feature_dicts(banned_users):
 	feature_dicts = []
@@ -314,43 +329,48 @@ def get_list_of_feature_dicts(banned_users):
 banned_users = [u for u in db.user.find({"is_banned" : True})] #Only banned users
 random.shuffle(banned_users)
 
-# def get_list_of_feature_dicts(unbanned_users):
-# 	feature_dicts = []
-# 	for user in unbanned_users:
-# 		feature_dicts.append(get_feature_dict_for_user(user))
-# 	return feature_dicts
-
 unbanned_users = [u for u in db.user.find({"is_banned" : False})] #unbanned users
 random.shuffle(unbanned_users)
 
 vec = DictVectorizer()
 
-banned_users = banned_users[:500]
-unbanned_users = unbanned_users[:500]
-banned_sample =   get_list_of_feature_dicts(banned_users[:500])
-unbanned_sample = get_list_of_feature_dicts(unbanned_users[:500])
-# random_sample = get_list_of_feature_dicts(random_users[:10])
-#
+def get_list_of_banned_user_id(user):
+	banned_users = [u for u in db.user.find({"is_banned" : True})]
+	return [user.get('_id', '') for user in banned_users]
 
+def get_list_of_unbanned_user_id(user):
+	unbanned_users = [u for u in db.user.find({"is_banned" : False})]
+	return [user.get('_id', '') for user in unbanned_users]
+
+num = 500
+
+banned_ids = get_list_of_banned_user_id(banned_users)[:num]
+
+unbanned_ids = get_list_of_unbanned_user_id(unbanned_users)[:num]
+
+banned_sample =   get_list_of_feature_dicts(banned_users[:num])
+
+unbanned_sample = get_list_of_feature_dicts(unbanned_users[:num])
 
 
 X = vec.fit_transform(banned_sample + unbanned_sample).toarray()
 Y = np.array([1] * len(banned_sample) + [0] * len(unbanned_sample))
+Z = np.array(banned_ids + unbanned_ids)
+
+
+# print Z
+
 # Z = vec.fit_transform(X + Yy).toarray()
 
-assert X.shape[0] == Y.shape[0]
+
+# In[37]:
+
+assert X.shape[0] == Y.shape[0] == Z.shape[0]
+# assert X.shape[0] == Z.shape[0]
+
 np.savetxt('features.dat', X, fmt='%-7.2f')
 np.savetxt('response.dat', Y, fmt='%-7.2f')
-# np.savetxt('unbanned_sample.dat', X_unbanned, fmt='%-7.2f')
-# np.savetxt('random_sample.dat', X_random, fmt='%-7.2f')
+np.savetxt('user_ids.dat', Z, fmt='%s')
 
 
-# i = vec.get_feature_names()
-# print len(i)
-
-# filenames = ['banned_sample.dat', 'unbanned_sample.dat'] #combines the two unbanned_sample and banned_sample data into one
-# with open('random_sample.dat', 'w') as outfile:
-#     for fname in filenames:
-#         with open(fname) as infile:
-#             for line in infile:
-#                 outfile.write(line)
+# In[ ]:
