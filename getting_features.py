@@ -342,7 +342,7 @@ def get_list_of_unbanned_user_id(user):
 	unbanned_users = [u for u in db.user.find({"is_banned" : False})]
 	return [user.get('_id', '') for user in unbanned_users]
 
-num = 500
+num = 689
 
 banned_ids = get_list_of_banned_user_id(banned_users)[:num]
 
