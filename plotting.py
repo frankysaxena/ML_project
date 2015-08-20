@@ -32,25 +32,25 @@ from sklearn import linear_model
 
 features = np.loadtxt("features.dat", unpack=True)
 response = np.loadtxt("response.dat", unpack=True)
-users = np.loadtxt("user_ids.dat")
+users = np.loadtxt("user_ids.dat", dtype='str')
 
 # In[3]:
 
 X = np.transpose(np.array(features))
 Y = np.array(response)
-
+users = np.array(users)
 
 # In[4]:
 
-pca = PCA(n_components=2)
-X_r = pca.fit(X).transform(X)
-print X.shape
-print Y.shape
+# pca = PCA(n_components=2)
+# X_r = pca.fit(X).transform(X)
+# print X.shape
+# print Y.shape
 
 
 # In[5]:
 
-get_ipython().magic(u'matplotlib inline')
+# get_ipython().magic(u'matplotlib inline')
 
 # plt.figure()
 # # , for x in Y use_colours[x[0]
@@ -68,7 +68,10 @@ get_ipython().magic(u'matplotlib inline')
 # In[6]:
 
 # print Y
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.5, random_state = 6)
+test_size = 0.5 
+r_state = 6
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = test_size, random_state = r_state)
+X_train, X_test, users_train, users_test = train_test_split(X, users, test_size = test_size, random_state = r_state)
 
 # knn = KNeighborsClassifier(n_neighbors=100)
 # knn.fit = (X_train, Y_train)
@@ -98,21 +101,28 @@ logreg = linear_model.LogisticRegression(C = 1e5)
 logreg.fit(X_train, Y_train)
 
 
+
 Z = logreg.predict(X_test)
+
+print "Printing incorrect classifications"
+print "\t".join(['user', 'truth', 'predict'])
+for user,truth,predict in zip(users_test,Y_test,Z):
+	if truth != predict:
+		print user, truth, predict
 
 labels = ['Unbanned' , 'Banned']
 
 cm = confusion_matrix(Y_test, Z)
 print(cm)
-fig = plt.figure()
-ax = fig.add_subplot(111)
-cax = ax.matshow(cm)
-fig.colorbar(cax)
-ax.set_xticklabels([''] + labels)
-ax.set_yticklabels([''] + labels)
-pl.xlabel('Predicted')
-pl.ylabel('True')
-pl.show()
+# fig = plt.figure()
+# ax = fig.add_subplot(111)
+# cax = ax.matshow(cm)
+# fig.colorbar(cax)
+# ax.set_xticklabels([''] + labels)
+# ax.set_yticklabels([''] + labels)
+# pl.xlabel('Predicted')
+# pl.ylabel('True')
+# pl.show()
 
 print accuracy_score(Y_test, Z, normalize=True)
 
