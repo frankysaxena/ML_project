@@ -1,9 +1,9 @@
-
+#! /usr/bin/env python
 # coding: utf-8
 
 # In[12]:
 
-#! /usr/bin/env python
+
 
 """Creates the user's profile to input into ML. First matrix only banned,
 second of only unbanned"""
@@ -342,7 +342,7 @@ def get_list_of_unbanned_user_id(user):
 	unbanned_users = [u for u in db.user.find({"is_banned" : False})]
 	return [user.get('_id', '') for user in unbanned_users]
 
-num = 689
+num = 5
 
 banned_ids = get_list_of_banned_user_id(banned_users)[:num]
 

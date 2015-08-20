@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 
 # coding: utf-8
 
@@ -31,7 +32,7 @@ from sklearn import linear_model
 
 features = np.loadtxt("features.dat", unpack=True)
 response = np.loadtxt("response.dat", unpack=True)
-
+users = np.loadtxt("user_ids.dat")
 
 # In[3]:
 
