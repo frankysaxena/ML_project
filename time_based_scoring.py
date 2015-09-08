@@ -17,21 +17,21 @@ def get_database_record_linked_to_user(user, collection):
 def get_submissions_for_user(user):
 	return get_database_record_linked_to_user(user, 'submission')
 
-def get_completed_studies_date_for_user(user):
-    submissions = get_submissions_for_user(user)
-    return [submission.get('completed_at', '') for submission in submissions]
+# def get_completed_studies_date_for_user(user):
+#     submissions = get_submissions_for_user(user)
+#     return [submission.get('completed_at', '').order_by('participant', '-completed_at') for submission in submissions]
 
 def get_last_completed_study_time_for_user(user):
-    all_studies = get_completed_studies_date_for_user(user)
-    last_study = all_studies.order_by('participant','-completed_at')
-    return last_study
+    if db['submission'].find_one({'participant' : user['_id']}):
+        last_submission = db['submission'].find({'participant' : user['_id']}).sort("started_at", -1)[0]
+        return last_submission['started_at']
 
 def get_submission_period_days(user):
     last_study_time_for_user = get_last_completed_study_time_for_user(user)
     current_time = datetime.datetime.now()
-    a = datetime.datetime.strptime(last_study_time_for_user, '%Y-%m-%d %H:%M')
+    # print type(last_study_time_for_user)
     b = datetime.datetime.now()
-    diff = b - a
+    diff = b - last_study_time_for_user
     return diff.days
 
 def assign_score(user):
@@ -39,4 +39,9 @@ def assign_score(user):
     user_score = period
     return user_score
 
-print assign_score('5363606dfdf99b56c3a59bf3')
+
+X = db.submission.find_one()
+
+user = db.user.find_one({'_id' : X['participant']})
+
+print assign_score(user)
