@@ -4,6 +4,11 @@
 
 import datetime
 from pymongo import MongoClient
+import matplotlib.pyplot as plt
+from numpy.random import normal
+import sys
+import pylab
+
 
 connection = MongoClient()
 
@@ -17,10 +22,6 @@ def get_database_record_linked_to_user(user, collection):
 def get_submissions_for_user(user):
 	return get_database_record_linked_to_user(user, 'submission')
 
-# def get_completed_studies_date_for_user(user):
-#     submissions = get_submissions_for_user(user)
-#     return [submission.get('completed_at', '').order_by('participant', '-completed_at') for submission in submissions]
-
 def get_last_completed_study_time_for_user(user):
     if db['submission'].find_one({'participant' : user['_id']}):
         last_submission = db['submission'].find({'participant' : user['_id']}).sort("started_at", -1)[0]
@@ -28,20 +29,39 @@ def get_last_completed_study_time_for_user(user):
 
 def get_submission_period_days(user):
     last_study_time_for_user = get_last_completed_study_time_for_user(user)
-    current_time = datetime.datetime.now()
-    # print type(last_study_time_for_user)
-    b = datetime.datetime.now()
-    diff = b - last_study_time_for_user
-    return diff.days
+    if  last_study_time_for_user is not None:
+        current_time = datetime.datetime.now()
+        b = datetime.datetime.now()
+        diff = b - last_study_time_for_user
+        return diff.days
+    else:
+        return 0
 
 def assign_score(user):
     period = get_submission_period_days(user)
     user_score = period
     return user_score
 
+# def get_num_participants_on_each_score(user):
+# 	scores = assign_score(user)
+# 	num_participants = len(scores)
+# 	return num_participants
+#
+# for score in db.submission.find():
+#     print get_num_participants_on_score(score)
 
-X = db.submission.find_one()
+row_list = []
 
-user = db.user.find_one({'_id' : X['participant']})
+for participant in db.user.find():
+    row = assign_score(participant)
+    row_list.append(row)
+# print row_list
 
-print assign_score(user)
+
+n = len(row_list)
+plt.hist(row_list, range=[0, 300], bins = n)
+plt.title("Numbers of users on each score")
+pylab.ylim([0,800])
+plt.xlabel("Score")
+plt.ylabel("Number of users")
+plt.show()
