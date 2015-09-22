@@ -23,24 +23,24 @@ def get_submissions_for_user(user):
 	return get_database_record_linked_to_user(user, 'submission')
 
 def get_last_completed_study_time_for_user(user):
-    if db['submission'].find_one({'participant' : user['_id']}):
-        last_submission = db['submission'].find({'participant' : user['_id']}).sort("started_at", -1)[0]
-        return last_submission['started_at']
+	if db['submission'].find_one({'participant' : user['_id']}):
+		last_submission = db['submission'].find({'participant' : user['_id']}).sort("started_at", -1)[0]
+		return last_submission['started_at']
 
 def get_submission_period_days(user):
-    last_study_time_for_user = get_last_completed_study_time_for_user(user)
-    if  last_study_time_for_user is not None:
-        current_time = datetime.datetime.now()
-        b = datetime.datetime.now()
-        diff = b - last_study_time_for_user
-        return diff.days
-    else:
-        return 0
+	last_study_time_for_user = get_last_completed_study_time_for_user(user)
+	if  last_study_time_for_user is not None:
+		current_time = datetime.datetime.now()
+		b = datetime.datetime.now()
+		diff = b - last_study_time_for_user
+		return diff.days
+	else:
+		return 0
 
 def assign_score(user):
-    period = get_submission_period_days(user)
-    user_score = period
-    return user_score
+	period = get_submission_period_days(user)
+	user_score = period
+	return user_score
 
 # def get_num_participants_on_each_score(user):
 # 	scores = assign_score(user)
@@ -48,20 +48,20 @@ def assign_score(user):
 # 	return num_participants
 #
 # for score in db.submission.find():
-#     print get_num_participants_on_score(score)
+#	 print get_num_participants_on_score(score)
 
 row_list = []
 
 for participant in db.user.find():
-    row = assign_score(participant)
-    row_list.append(row)
-# print row_list
+	row = assign_score(participant)
+	row_list.append(row)
+	print assign_score(participant), participant['_id']
 
 
-n = len(row_list)
-plt.hist(row_list, range=[0, 300], bins = n)
-plt.title("Numbers of users on each score")
-pylab.ylim([0,800])
-plt.xlabel("Score")
-plt.ylabel("Number of users")
-plt.show()
+# n = len(row_list)
+# plt.hist(row_list, range=[0, 300], bins = n)
+# plt.title("Numbers of users on each score")
+# pylab.ylim([0,800])
+# plt.xlabel("Score")
+# plt.ylabel("Number of users")
+# plt.show()
